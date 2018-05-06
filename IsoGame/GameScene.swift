@@ -17,141 +17,105 @@ func / (point: CGPoint, scalar: CGPoint) -> CGPoint {
     return CGPoint(x: point.x / scalar.x, y: point.y / scalar.y)
 }
 
-enum Tile: Int {
+func distance(p1:CGPoint, p2:CGPoint) -> CGFloat {
+    return CGFloat(hypotf(Float(p1.x) - Float(p2.x), Float(p1.y) - Float(p2.y)))
+}
+
+func round(point:CGPoint) -> CGPoint {
+    return CGPoint(x: round(point.x), y: round(point.y))
+}
+
+func floor(point:CGPoint) -> CGPoint {
+    return CGPoint(x: floor(point.x), y: floor(point.y))
+}
+
+func ceil(point:CGPoint) -> CGPoint {
+    return CGPoint(x: ceil(point.x), y: ceil(point.y))
+}
+
+enum Direction: Int {
     
-    case Ground //0
-    case Wall_n //1
-    case Wall_ne //2
-    case Wall_e //3
-    case Wall_se //4
-    case Wall_s //5
-    case Wall_sw //6
-    case Wall_w //7
-    case Wall_nw //8
-    case Droid_n
-    case Droid_ne
-    case Droid_e
-    case Droid_se
-    case Droid_s
-    case Droid_sw
-    case Droid_w
-    case Droid_nw
+    case N,NE,E,SE,S,SW,W,NW
     
     var description:String {
         switch self {
-        case .Ground:
-            return "Ground"
-        case .Wall_n:
-            return "Wall North"
-        case .Wall_ne:
-            return "Wall North East"
-        case .Wall_e:
-            return "Wall East"
-        case .Wall_se:
-            return "Wall South East"
-        case .Wall_s:
-            return "Wall South"
-        case .Wall_sw:
-            return "Wall South West"
-        case .Wall_w:
-            return "Wall West"
-        case .Wall_nw:
-            return "Wall North West"
-        case .Droid_n:
-            return "Droid North"
-        case .Droid_ne:
-            return "Droid North East"
-        case .Droid_e:
-            return "Droid East"
-        case .Droid_se:
-            return "Droid South East"
-        case .Droid_s:
-            return "Droid South"
-        case .Droid_sw:
-            return "Droid South West"
-        case .Droid_w:
-            return "Droid West"
-        case .Droid_nw:
-            return "Droid North West"
+        case .N:return "North"
+        case .NE:return "North East"
+        case .E:return "East"
+        case .SE:return "South East"
+        case .S:return "South"
+        case .SW:return "South West"
+        case .W:return "West"
+        case .NW:return "North West"
         }
     }
+}
+
+enum Tile: Int {
     
-    var image:String {
+    case Ground, Wall, Droid
+    
+    var description:String {
         switch self {
-        case .Ground:
-            return "ground"
-        case .Wall_n:
-            return "wall_n"
-        case .Wall_ne:
-            return "wall_ne"
-        case .Wall_e:
-            return "wall_e"
-        case .Wall_se:
-            return "wall_se"
-        case .Wall_s:
-            return "wall_s"
-        case .Wall_sw:
-            return "wall_sw"
-        case .Wall_w:
-            return "wall_w"
-        case .Wall_nw:
-            return "wall_nw"
-        case .Droid_n:
-            return "droid_n"
-        case .Droid_ne:
-            return "droid_ne"
-        case .Droid_e:
-            return "droid_e"
-        case .Droid_se:
-            return "droid_se"
-        case .Droid_s:
-            return "droid_s"
-        case .Droid_sw:
-            return "droid_sw"
-        case .Droid_w:
-            return "droid_w"
-        case .Droid_nw:
-            return "droid_nw"
+        case .Ground:return "Ground"
+        case .Wall:return "Wall"
+        case .Droid:return "Droid"
+        }
+    }
+}
+
+enum Action: Int {
+    case Idle, Move
+    
+    var description:String {
+        switch self {
+        case .Idle:return "Idle"
+        case .Move:return "Move"
         }
     }
 }
 
 
-
 class GameScene: SKScene {
-    
-    //1
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    //2
+
     let view2D:SKSpriteNode
     let viewIso:SKSpriteNode
     
-    //3
-    let tiles = [
-        [8, 1, 1, 1, 1, 2],
-        [7 ,0, 0, 0, 0, 3],
-        [7 ,0, 11, 0, 0, 3],
-        [7 ,0, 0, 0, 0, 3],
-        [7 ,0, 0, 0, 0, 3],
-        [6, 5, 5, 5, 5, 4]
-    ]
+    let layerIsoGround:SKNode
+    let layerIsoObjects:SKNode
+    
+    var tiles:[[(Int, Int)]]
     
     let tileSize = (width:32, height:32)
+    let hero = Droid()
     
-    //4
+    let nthFrame = 6
+    var nthFrameCount = 0
+
     override init(size: CGSize) {
         
         view2D = SKSpriteNode()
+        layerIsoGround = SKNode()
+        layerIsoObjects = SKNode()
+        
+        tiles =     [[(1,7), (1,0), (1,0), (1,0), (1,0), (1,0), (1,1)]]
+        tiles.append([(1,6), (0,0), (0,0), (0,0), (0,0), (0,0), (1,2)])
+        tiles.append([(1,6), (0,0), (2,2), (0,0), (0,0), (0,0), (1,2)])
+        tiles.append([(1,6), (0,0), (0,0), (1,5), (1,4), (1,4), (1,3)])
+        tiles.append([(1,6), (0,0), (0,0), (0,0), (0,0), (0,0), (0,0)])
+        tiles.append([(1,6), (0,0), (0,0), (0,0), (0,0), (0,0), (0,0)])
+        tiles.append([(1,5), (1,4), (1,4), (1,4), (1,4), (1,4), (1,3)])
+        
         viewIso = SKSpriteNode()
         
         super.init(size: size)
         self.anchorPoint = CGPoint(x:0.5, y:0.5)
     }
     
-    //5
     override func didMove(to view: SKView) {
         
         let deviceScale = self.size.width/667
@@ -159,27 +123,38 @@ class GameScene: SKScene {
         view2D.position = CGPoint(x:-self.size.width*0.45, y:self.size.height*0.17)
         view2D.xScale = deviceScale
         view2D.yScale = deviceScale
+        
         addChild(view2D)
         
         viewIso.position = CGPoint(x:self.size.width*0.12, y:self.size.height*0.12)
         viewIso.xScale = deviceScale
         viewIso.yScale = deviceScale
+        
+        viewIso.addChild(layerIsoGround)
+        viewIso.addChild(layerIsoObjects)
+        
         addChild(viewIso)
+        
         placeAllTiles2D()
         placeAllTilesIso()
         
     }
     
-    func placeTile2D(image:String, withPosition:CGPoint) {
-    
-        let tileSprite = SKSpriteNode(imageNamed: image)
+    func placeTile2D(tile:Tile, direction:Direction, position:CGPoint) {
         
-        tileSprite.position = withPosition
+        let tileSprite = SKSpriteNode(imageNamed: textureImage(tile: tile, direction: direction, action: Action.Idle))
+        
+        if (tile == hero.tile) {
+            hero.tileSprite2D = tileSprite
+            hero.tileSprite2D.zPosition = 1
+        }
+        
+        tileSprite.position = position
         
         tileSprite.anchorPoint = CGPoint(x:0, y:0)
         
         view2D.addChild(tileSprite)
-    
+        
     }
     
 
@@ -191,35 +166,41 @@ class GameScene: SKScene {
             let row = tiles[i];
             
             for j in 0..<row.count {
-                let tileInt = row[j]
                 
-                //1
-                let tile = Tile(rawValue: tileInt)!
+                let tile = Tile(rawValue: row[j].0)!
+                let direction = Direction(rawValue: row[j].1)!
                 
-                //2
                 let point = CGPoint(x: (j*tileSize.width), y: -(i*tileSize.height))
                 
-                //render the ground beneath the character
-                if (tile == Tile.Droid_e) {
-                    placeTile2D(image: Tile.Ground.image, withPosition:point)
+                if (tile == Tile.Droid) {
+                    placeTile2D(tile: Tile.Ground, direction:direction, position:point)
                 }
                 
-                placeTile2D(image: tile.image, withPosition:point)
+                placeTile2D(tile: tile, direction:direction, position:point)
             }
             
         }
-        
     }
     
-    func placeTileIso(image:String, withPosition:CGPoint) {
+    func placeTileIso(tile:Tile, direction:Direction, position:CGPoint) {
         
-        let tileSprite = SKSpriteNode(imageNamed: image)
+        let tileSprite = SKSpriteNode(imageNamed: "iso_3d_"+textureImage(tile: tile, direction: direction, action: Action.Idle))
         
-        tileSprite.position = withPosition
+        if (tile == hero.tile) {
+            hero.tileSpriteIso = tileSprite
+        }
+        
+        tileSprite.position = position
         
         tileSprite.anchorPoint = CGPoint(x:0, y:0)
         
-        viewIso.addChild(tileSprite)
+        //ensure ground tiles are below
+        if (tile == Tile.Ground) {
+            layerIsoGround.addChild(tileSprite)
+        } else if (tile == Tile.Wall || tile == Tile.Droid) {
+            layerIsoObjects.addChild(tileSprite)
+        }
+        
     }
     
     func placeAllTilesIso() {
@@ -230,15 +211,16 @@ class GameScene: SKScene {
             
             for j in 0..<row.count {
                 
-                let tileInt = row[j]
+                let tile = Tile(rawValue: row[j].0)!
+                let direction = Direction(rawValue: row[j].1)!
                 
-                let tile = Tile(rawValue: tileInt)!
-                
-                //1
                 let point = point2DToIso(p: CGPoint(x: (j*tileSize.width), y: -(i*tileSize.height)))
                 
-                //2
-                placeTileIso(image: ("iso_3d_"+tile.image), withPosition:point)
+                if (tile == Tile.Droid) {
+                    placeTileIso(tile: Tile.Ground, direction:direction, position:point)
+                }
+                
+                placeTileIso(tile: tile, direction:direction, position:point)
                 
             }
         }
@@ -273,5 +255,96 @@ class GameScene: SKScene {
         return point
         
     }
+    
+    override func update(_ currentTime: TimeInterval)  {
+        
+        hero.tileSpriteIso.position = point2DToIso(p: hero.tileSprite2D.position)
+        nthFrameCount += 1
+        if (nthFrameCount == nthFrame) {
+            nthFrameCount = 0
+            updateOnNthFrame()
+        }
+        
+    }
+    
+    func updateOnNthFrame() {
+        sortDepth()
+    }
+    
+    func degreesToDirection(fromDegrees:CGFloat) -> Direction {
+        
+        var degrees = fromDegrees
+        
+        if (degrees < 0) {
+            degrees = degrees + 360
+        }
+        let directionRange = 45.0
+        
+        degrees = degrees + CGFloat(directionRange/2)
+        
+        var direction = Int(floor(Double(degrees)/directionRange))
+        
+        if (direction == 8) {
+            direction = 0
+        }
+        
+        return Direction(rawValue: direction)!
+    }
+    
+    func sortDepth() {
+        
+        //1
+        let childrenSortedForDepth = layerIsoObjects.children.sorted() {
+            
+            let p0 = self.pointIsoTo2D(p: $0.position)
+            let p1 = self.pointIsoTo2D(p: $1.position)
+            
+            if ((p0.x+(-p0.y)) > (p1.x+(-p1.y))) {
+                return false
+            } else {
+                return true
+            }
+            
+        }
+        //2
+        for i in 0..<childrenSortedForDepth.count {
+            
+            let node = (childrenSortedForDepth[i] as SKNode)
+            
+            node.zPosition = CGFloat(i)
+            
+        }
+    }
+
+    
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
+        
+        let touch = touches.first //as UITouch
+        let touchLocation = touch?.location(in: viewIso)
+   
+        var touchPos2D = pointIsoTo2D(p: touchLocation!)
+     
+        touchPos2D = touchPos2D + CGPoint(x:tileSize.width/2, y:-tileSize.height/2)
+       
+        let heroPos2D = touchPos2D + CGPoint(x:-tileSize.width/2, y:-tileSize.height/2)
+      
+        let deltaY = heroPos2D.y - hero.tileSprite2D.position.y
+        let deltaX = heroPos2D.x - hero.tileSprite2D.position.x
+        
+        let degrees = atan2(deltaX, deltaY) * (180.0 / CGFloat(Double.pi))
+      
+        hero.facing = degreesToDirection(fromDegrees: degrees)
+      
+        hero.update()
+        
+        let velocity = 100
+
+        let time = TimeInterval(distance(p1: heroPos2D, p2:hero.tileSprite2D.position)/CGFloat(velocity))
+        hero.tileSprite2D.removeAllActions()
+        hero.tileSprite2D.run(SKAction.move(to: heroPos2D, duration: time))
+        
+    }
+    
     
 }
