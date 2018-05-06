@@ -1,16 +1,78 @@
 import SpriteKit
 
+//overloads for the CGPoint object
+func + (left: CGPoint, right: CGPoint) -> CGPoint {
+    return CGPoint(x: left.x + right.x, y: left.y + right.y)
+}
+
+func - (left: CGPoint, right: CGPoint) -> CGPoint {
+    return CGPoint(x: left.x - right.x, y: left.y - right.y)
+}
+
+func * (point: CGPoint, scalar: CGPoint) -> CGPoint {
+    return CGPoint(x: point.x * scalar.x, y: point.y * scalar.y)
+}
+
+func / (point: CGPoint, scalar: CGPoint) -> CGPoint {
+    return CGPoint(x: point.x / scalar.x, y: point.y / scalar.y)
+}
+
 enum Tile: Int {
     
-    case Ground
-    case Wall
+    case Ground //0
+    case Wall_n //1
+    case Wall_ne //2
+    case Wall_e //3
+    case Wall_se //4
+    case Wall_s //5
+    case Wall_sw //6
+    case Wall_w //7
+    case Wall_nw //8
+    case Droid_n
+    case Droid_ne
+    case Droid_e
+    case Droid_se
+    case Droid_s
+    case Droid_sw
+    case Droid_w
+    case Droid_nw
     
     var description:String {
         switch self {
         case .Ground:
             return "Ground"
-        case .Wall:
-            return "Wall"
+        case .Wall_n:
+            return "Wall North"
+        case .Wall_ne:
+            return "Wall North East"
+        case .Wall_e:
+            return "Wall East"
+        case .Wall_se:
+            return "Wall South East"
+        case .Wall_s:
+            return "Wall South"
+        case .Wall_sw:
+            return "Wall South West"
+        case .Wall_w:
+            return "Wall West"
+        case .Wall_nw:
+            return "Wall North West"
+        case .Droid_n:
+            return "Droid North"
+        case .Droid_ne:
+            return "Droid North East"
+        case .Droid_e:
+            return "Droid East"
+        case .Droid_se:
+            return "Droid South East"
+        case .Droid_s:
+            return "Droid South"
+        case .Droid_sw:
+            return "Droid South West"
+        case .Droid_w:
+            return "Droid West"
+        case .Droid_nw:
+            return "Droid North West"
         }
     }
     
@@ -18,12 +80,43 @@ enum Tile: Int {
         switch self {
         case .Ground:
             return "ground"
-        case .Wall:
-            return "wall"
-            
+        case .Wall_n:
+            return "wall_n"
+        case .Wall_ne:
+            return "wall_ne"
+        case .Wall_e:
+            return "wall_e"
+        case .Wall_se:
+            return "wall_se"
+        case .Wall_s:
+            return "wall_s"
+        case .Wall_sw:
+            return "wall_sw"
+        case .Wall_w:
+            return "wall_w"
+        case .Wall_nw:
+            return "wall_nw"
+        case .Droid_n:
+            return "droid_n"
+        case .Droid_ne:
+            return "droid_ne"
+        case .Droid_e:
+            return "droid_e"
+        case .Droid_se:
+            return "droid_se"
+        case .Droid_s:
+            return "droid_s"
+        case .Droid_sw:
+            return "droid_sw"
+        case .Droid_w:
+            return "droid_w"
+        case .Droid_nw:
+            return "droid_nw"
         }
     }
 }
+
+
 
 class GameScene: SKScene {
     
@@ -38,13 +131,14 @@ class GameScene: SKScene {
     
     //3
     let tiles = [
-        [1, 1, 1, 1, 1, 1],
-        [1 ,0, 0, 0, 0, 1],
-        [1 ,0, 0, 0, 0, 1],
-        [1 ,0, 0, 0, 0, 1],
-        [1 ,0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1]
+        [8, 1, 1, 1, 1, 2],
+        [7 ,0, 0, 0, 0, 3],
+        [7 ,0, 11, 0, 0, 3],
+        [7 ,0, 0, 0, 0, 3],
+        [7 ,0, 0, 0, 0, 3],
+        [6, 5, 5, 5, 5, 4]
     ]
+    
     let tileSize = (width:32, height:32)
     
     //4
@@ -72,18 +166,19 @@ class GameScene: SKScene {
         viewIso.yScale = deviceScale
         addChild(viewIso)
         placeAllTiles2D()
-        print ("did move")
+        placeAllTilesIso()
+        
     }
     
     func placeTile2D(image:String, withPosition:CGPoint) {
     
-    let tileSprite = SKSpriteNode(imageNamed: image)
-    
-    tileSprite.position = withPosition
-    
-    tileSprite.anchorPoint = CGPoint(x:0, y:0)
-    
-    view2D.addChild(tileSprite)
+        let tileSprite = SKSpriteNode(imageNamed: image)
+        
+        tileSprite.position = withPosition
+        
+        tileSprite.anchorPoint = CGPoint(x:0, y:0)
+        
+        view2D.addChild(tileSprite)
     
     }
     
@@ -104,10 +199,79 @@ class GameScene: SKScene {
                 //2
                 let point = CGPoint(x: (j*tileSize.width), y: -(i*tileSize.height))
                 
+                //render the ground beneath the character
+                if (tile == Tile.Droid_e) {
+                    placeTile2D(image: Tile.Ground.image, withPosition:point)
+                }
+                
                 placeTile2D(image: tile.image, withPosition:point)
             }
             
         }
         
     }
+    
+    func placeTileIso(image:String, withPosition:CGPoint) {
+        
+        let tileSprite = SKSpriteNode(imageNamed: image)
+        
+        tileSprite.position = withPosition
+        
+        tileSprite.anchorPoint = CGPoint(x:0, y:0)
+        
+        viewIso.addChild(tileSprite)
+    }
+    
+    func placeAllTilesIso() {
+        
+        for i in 0..<tiles.count {
+            
+            let row = tiles[i];
+            
+            for j in 0..<row.count {
+                
+                let tileInt = row[j]
+                
+                let tile = Tile(rawValue: tileInt)!
+                
+                //1
+                let point = point2DToIso(p: CGPoint(x: (j*tileSize.width), y: -(i*tileSize.height)))
+                
+                //2
+                placeTileIso(image: ("iso_3d_"+tile.image), withPosition:point)
+                
+            }
+        }
+    }
+    
+    func point2DToIso(p:CGPoint) -> CGPoint {
+        
+        //invert y pre conversion
+        var point = p * CGPoint(x:1, y:-1)
+        
+        //convert using algorithm
+        point = CGPoint(x:(point.x - point.y), y: ((point.x + point.y) / 2))
+        
+        //invert y post conversion
+        point = point * CGPoint(x:1, y:-1)
+        
+        return point
+        
+    }
+    
+    func pointIsoTo2D(p:CGPoint) -> CGPoint {
+        
+        //invert y pre conversion
+        var point = p * CGPoint(x:1, y:-1)
+        
+        //convert using algorithm
+        point = CGPoint(x:((2 * point.y + point.x) / 2), y: ((2 * point.y - point.x) / 2))
+        
+        //invert y post conversion
+        point = point * CGPoint(x:1, y:-1)
+        
+        return point
+        
+    }
+    
 }
